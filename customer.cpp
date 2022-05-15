@@ -3,12 +3,19 @@
 #include "customer.hpp"
 
 
-AllCustomers();
-~AllCustomers();
-AllCustomers(AllCustomers& rhs, vector<AllPurchases*> purchaseData,
-			 vector<string> stringData, vector<int> intData);
+AllCustomers::AllCustomers(){};
+AllCustomers::~AllCustomers(){};
+AllCustomers::AllCustomers(string firstn, 	string lastn,
+						   string addr, 	string city,
+						   string state,	int zip,
+						   int phone,		int acc):
+						firstName(firstn), 	lastName(lastn),
+						address(addr), 		city(city),
+						state(state),		zip(zip),
+						phone(phone),		account(acc)
+{}								
 	
-vector<AllPurchases*> get_purchases(){
+vector<AllPurchases*> AllCustomers::get_purchases(){
 	return purchases;
 }
 string AllCustomers::get_firstn(){
@@ -80,7 +87,13 @@ void AllCustomers::get_purchases_from_vector(vector<AllPurchases*> allPurchases)
 	}
 }
 
-double AllCustomers::get_purchase_sum(){}
+double AllCustomers::get_purchase_sum(){
+	double sum = 0;
+	for(int i = 0; i < purchases.size(); i++){
+		sum += purchases.at(i)->get_price();
+	}
+	return sum;
+}
 
 //For absolutely no reason I decided to use a vector of lambda functions
 //to determine how to sort the objects in the vector of purchases
@@ -177,12 +190,33 @@ void AllCustomers::sort_purchases(int flag){
 	}
 }
 
-vector<AllCustomers*> populate_customers_from_file(string filename){
-	vector<AllCustomers*> output;
+void AllCustomers::populate_purchases(string filename){
 	ifstream inFile;
 	string tmp;
 	vector<string> inV;
 	inFile.open(filename);
+	while(getline(inFile, tmp)){
+		if(tmp[0] == '$')
+			tmp = tmp.substr(1, tmp.size()-1);
+		inV.push_back(tmp);
+		if(inV.size() == 5 && stoi(inV.at(4)) == this->account){
+			purchases.push_back(new AllPurchases(  inV.at(0), 
+						    					inV.at(1), 
+										   stoi(inV.at(2)), 
+			 		  					   stof(inV.at(3)),
+			 		  					   stoi(inV.at(4))));
+			inV.clear();
+		}
+	}
+	inFile.close();
+}
+
+vector<AllCustomers*> populate_customers_from_file(string cfile, string pfile){
+	vector<AllCustomers*> output;
+	ifstream inFile;
+	string tmp;
+	vector<string> inV;
+	inFile.open(cfile);
 	while(getline(inFile, tmp)){
 		inV.push_back(tmp);
 		if(inV.size() == 8){
@@ -192,12 +226,15 @@ vector<AllCustomers*> populate_customers_from_file(string filename){
 						    					inV.at(3),
 						    					inV.at(4), 
 										   stoi(inV.at(5)), 
-			 		  					   stoi(inV.at(6))
+			 		  					   stoi(inV.at(6)),
 			 		  					   stoi(inV.at(7))));
 			inV.clear();
 		}
 	}
 	inFile.close();
+	for(int i = 0; i < output.size(); i++){
+		output.at(i)->populate_purchases(pfile);
+	}
 	return output;
 }
 
@@ -222,7 +259,7 @@ void write_purchase_file(vector<AllCustomers*> customers, string filename){
 	outFile.open(filename, ios_base::trunc);
 	outFile.close();
 	for(int i = 0; i < customers.size(); i++){
-		customers.at(i)->write_purchase_list(filename);
+		write_purchase_list(customers.at(i)->get_purchases(), filename);
 	}
 }
 

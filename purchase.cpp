@@ -68,29 +68,6 @@ void AllPurchases::print(){
 	return;
 }
 
-vector<AllPurchases*> populate_purchases_from_file(string filename){
-	vector<AllPurchases*> output;
-	ifstream inFile;
-	string tmp;
-	vector<string> inV;
-	inFile.open(filename);
-	while(getline(inFile, tmp)){
-		if(tmp[0] == '$')
-			tmp = tmp.substr(1, tmp.size()-1);
-		inV.push_back(tmp);
-		if(inV.size() == 5){
-			output.push_back(new AllPurchases(  inV.at(0), 
-						    					inV.at(1), 
-										   stoi(inV.at(2)), 
-			 		  					   stof(inV.at(3)),
-			 		  					   stoi(inV.at(4))));
-			inV.clear();
-		}
-	}
-	inFile.close();
-	return output;
-}
-
 void AllPurchases::write_to_file(string filename){
 	ofstream outFile;
 	outFile.open(filename, ios_base::app);

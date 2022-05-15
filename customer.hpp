@@ -22,9 +22,11 @@ public:
 	
 	AllCustomers();
 	~AllCustomers();
-	AllCustomers(AllCustomers& rhs, vector<AllPurchases*> purchaseData,
-			 vector<string> stringData, vector<int> intData);
-	
+	AllCustomers(string firstn, string lastn,
+			     string addr, 	string city,
+				 string state,	int zip,
+				 int phone,		int acc);
+
 	vector<AllPurchases*> get_purchases();
 	string get_firstn();
 	string get_lastn();
@@ -48,14 +50,16 @@ public:
 	bool operator==(AllCustomers& rhs);
 	bool operator<=(AllCustomers& rhs);
 
+	void populate_purchases(string filename);
 
+	void sort_purchases(int flag);
 	void get_purchases_from_vector(vector<AllPurchases*> allPurchases);
-	void sort_purchase_list(int flag);
 
 	double get_purchase_sum();
 
 	void print();
 	void write_to_file(string filename);
+	
 };
 
 /*Print out all list of all AllCustomerss

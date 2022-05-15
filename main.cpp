@@ -6,13 +6,30 @@
 #include <cctype>
 #include <stdio.h>
 #include <curses.h>
+#include <cmath>
 #include <regex>
-#include "./customer.hpp"
-#include "curses.cpp"
+#include <unistd.h>
+#include "./customer.cpp"
+#include "./curses.cpp"
 
 int main(int argv, char** argc){
 	if(argv != 3){
 		printf("Run with two file locations as arguments.\n");
 		return 1;
 	}
+	string customerFile = argc[1];
+	string purchaseFile = argc[2];
+	vector<AllCustomers*> AllCustomers 
+		= populate_customers_from_file(customerFile, purchaseFile);
+	init_curses();
+	intro_graphic();
+	
+	endwin();
+	curs_set(2);
 };
+
+
+
+
+
+
