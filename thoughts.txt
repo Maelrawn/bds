@@ -1,0 +1,7 @@
+This project was pretty clearly intended to show us how important it is to write clean code. The project specification is extremely similar to the previous project, so it naturally invites the student to revisit their code from the previous project. But, we all suck, so I'm sure this was much more difficult than it seemed like it might be at first glance (certainly was for me). 
+
+Additionally, in writing this program, I got a better sense of what should get its own abstraction. Why did I write a bunch of separate functions for menus that operated in the same way, but with different parameters? I just didn't think about how similar these things would be, or how many I would have to write, before I actually began writing it. It's pretty clear now that I should have planned to write one extensible framework for each type of menu, and then put those pieces together to make what I wound up with, instead of making the nightmare project that I did.
+
+Also, I learned what lambdas are. It makes me interested in function pointers in general, and I wonder what other use cases for these concepts are. My sorting function is probably not a good use case in general, but I thought it was a novel way to solve the problem regardless.
+
+As with the previous project, I'm glad we did this.
