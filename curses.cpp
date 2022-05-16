@@ -14,6 +14,8 @@ void clear_screen(){
          mvaddch(y, x, ' ');
 }
 
+
+//This clears all cells on the screen except the ones we want to paint
 void clear_screen_intro(){
 	vector<string> logo ={
 "                                                                                 ",
@@ -51,6 +53,7 @@ void clear_screen_intro(){
 
 //too lazy to figure out a more intelligent way to do this tbh
 
+//Displays a funny IBM-style logo
 void intro_graphic(){
 	int k = 45;
 	for(int i = 0; i < 81; i++){
@@ -189,6 +192,8 @@ void display_purchases(vector<AllPurchases*> purchases, int idx){
    refresh();
 }
 
+
+//Analogous function for type AllCustomers
 void display_customers(vector<AllCustomers*> &customers, int idx){
    clear_rectangle(1, WIDTH, 11, HEIGHT);
    vector<string> itemdata;
@@ -205,7 +210,8 @@ void display_customers(vector<AllCustomers*> &customers, int idx){
 }
 
 
-
+//Used to manipulate menus in 2 dimensions; replaced vertical/horizontal
+//menu dichotomy from last project
 char handle_2d_input(int maxitemx, int maxitemy, int& xidx, int& yidx){
 	char input = ' ';
 	string uparrow = "^";
@@ -258,6 +264,7 @@ char handle_2d_input(int maxitemx, int maxitemy, int& xidx, int& yidx){
 }
 
 //Handles vertical menus
+//Used for lists where we know the options in advance
 int handle_vert_in(int maxitem, int column){
    char input = ' ';
    int menuitem = 0;
@@ -287,7 +294,7 @@ int handle_vert_in(int maxitem, int column){
 
 //Because we used cbreak() to disable text inputs being immediately
 //displayed in the terminal, we need a function to simulate that
-//functionality. Now featuring backspace!
+//functionality. Now featuring backspace! No longer featuring backspace!
 string handle_text_in(int column, int row){
    char ch = ' ';
    int i = 0;
@@ -340,6 +347,8 @@ string handle_numeric_in(int column, int row){
       return to_string(INT_MAX);
 }
 
+
+//Displays a menu and adds a purchase to our given customer
 void add_purchase(AllCustomers* &customer){
     AllPurchases* purchase = new AllPurchases();
 	clear_rectangle(1, WIDTH, 6, HEIGHT);
@@ -396,6 +405,7 @@ void add_purchase(AllCustomers* &customer){
 	curs_set(0);
 }
 
+//Displays menu for and changes fields in some purchase
 void edit_purchase(AllPurchases* &purchase){
 	clear_rectangle(1, WIDTH, 6, HEIGHT);
     int selection = 0;
@@ -439,6 +449,7 @@ void edit_purchase(AllPurchases* &purchase){
 	}
 }
 
+//Same as above, but for AllCustomers instead
 void edit_customer(AllCustomers* &customer){
 	clear_rectangle(1, WIDTH, 6, HEIGHT);
     int selection = 0;
@@ -521,30 +532,7 @@ void browse_customer_list(vector<AllCustomers*> &customers){
    }
 }
 
-// void browse_customers(vector<AllCustomers*> &customers){
-//    int xidx = 0;
-//    int yidx = 0;
-//    char input = ' ';
-//    while(xidx != -1){
-//       clear_rectangle(0, WIDTH, 0, HEIGHT);
-//    	  draw_fullscreen_border();
-//    	  draw_header();
-//       display_customer_header(customers, xidx);
-//       display_purchases(customers.at(xidx)->get_purchases(), yidx);
-//       highlight_option(3, 0, 5);
-//       input = handle_2d_input(	customers.size()-1, 
-//       							customers.at(xidx)->get_purchases().size()-1,
-//       							xidx,
-//       							yidx);
-//       clear_option(3, 0, 5);
-//       if(input == '\n'){
-//       	edit_purchase(customers.at(xidx)->get_purchases().at(yidx));
-//       }
-//    }
-// }
-
-//TODO: MENU FOR EDITING A CUSTOMER
-
+//Displays menu to view all data stored in input files
 void browse_customers(vector<AllCustomers*> &customers){
    int xidx = 0;
    int yidx = 0;
@@ -567,6 +555,7 @@ void browse_customers(vector<AllCustomers*> &customers){
    }
 }
 
+//Eliminates a variable from our vector of customers
 void delete_customer(vector<AllCustomers*> &customers){
    int xidx = 0;
    int yidx = 0;
@@ -588,6 +577,7 @@ void delete_customer(vector<AllCustomers*> &customers){
    }
 }
 
+//Displays submenu for sorting options
 void display_sort_options(){
 	vector<string> menuitems = {"Items, ascending",
 								"Items, descending",
@@ -600,6 +590,7 @@ void display_sort_options(){
 	}
 }
 
+//Passthrough to send user selection to our sorting function
 void sort_customer_purchases(vector<AllCustomers*> &customers){
 	int flag = 0;
 	display_sort_options();

@@ -29,3 +29,5 @@ int main_function(int argv, char** argc){
 	curs_set(2);
 	return 0;
 }
+
+//I have _THE_ shortest main.cpp in class

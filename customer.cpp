@@ -3,18 +3,23 @@
 
 #include "customer.hpp"
 
+//Account ID is incremented automatically on creation of new member.
 AllCustomers::AllCustomers()
 	:firstName(" "), lastName(" "), address(" "), city(" "),
 	 state(" "), zip(" "), phone(" "){
 	 	account = accountmax;
 	 	accountmax++;
 	 };
+
+//Because we have a vector of pointers, we want to make sure
+//we free that memory properly when we delete this object
 AllCustomers::~AllCustomers(){
 	for(int i = 0; i < purchases.size(); i++){
 		delete purchases.at(i);
 	}
 	delete this;
 };
+
 AllCustomers::AllCustomers(string firstn, 	string lastn,
 						   string addr, 	string city,
 						   string state,	string zip,
@@ -95,6 +100,7 @@ void AllCustomers::get_purchases_from_vector(vector<AllPurchases*> allPurchases)
 	}
 }
 
+//Finds the sum total of all purchases tracked by the customer
 double AllCustomers::get_purchase_sum(){
 	double sum = 0;
 	for(int i = 0; i < purchases.size(); i++){
@@ -197,6 +203,7 @@ void AllCustomers::sort_purchases(int flag){
 	}
 }
 
+//Sorts our customers by account ID
 void sort_by_account(vector<AllCustomers*> &customers){
 	AllCustomers* tmp;
 	for(int i = 0; i < customers.size(); i++){
@@ -209,6 +216,9 @@ void sort_by_account(vector<AllCustomers*> &customers){
 		}
 	}
 }
+
+//Reads through an input file and adds any purchases with matching
+//account IDs to our AllCustomer's vector of purchases
 void AllCustomers::populate_purchases(string filename){
 	ifstream inFile;
 	string tmp;
@@ -234,6 +244,7 @@ void AllCustomers::populate_purchases(string filename){
 	inFile.close();
 }
 
+//Reads all data from a file and stores it as AllCustomers
 vector<AllCustomers*> populate_customers_from_file(string cfile, string pfile){
 	vector<AllCustomers*> output;
 	ifstream inFile;
@@ -271,6 +282,7 @@ vector<AllCustomers*> populate_customers_from_file(string cfile, string pfile){
 	return output;
 }
 
+//Member function for a given customer to write its info to a file
 void AllCustomers::write_to_file(string filename){
 	ofstream outFile;
 	outFile.open(filename, ios_base::app);
@@ -287,6 +299,7 @@ void AllCustomers::write_to_file(string filename){
 	outFile.flush();
 }
 
+//Writes all of our purchase data to its own file
 void write_purchase_file(vector<AllCustomers*> customers, string filename){
 	ofstream outFile;
 	outFile.open(filename, ios_base::trunc);
@@ -296,6 +309,7 @@ void write_purchase_file(vector<AllCustomers*> customers, string filename){
 	}
 }
 
+//Writes all of our customer data to its own file
 void write_customer_file(vector<AllCustomers*> customers, string filename){
 	ofstream outFile;
 	outFile.open(filename, ios_base::trunc);

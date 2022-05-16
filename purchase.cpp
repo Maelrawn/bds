@@ -3,6 +3,7 @@
 
 #include "purchase.hpp"
 
+//Account max is incremented automatically
 AllPurchases::AllPurchases(string item, string date,
 		 int amount, double price,
 		 int account)
@@ -67,6 +68,7 @@ bool AllPurchases::operator<=(AllPurchases& rhs){
 	return this->account <= rhs.account;
 }
 
+//Writes a purchase to the given file
 void AllPurchases::write_to_file(string filename){
 	ofstream outFile;
 	outFile.open(filename, ios_base::app);
@@ -80,6 +82,7 @@ void AllPurchases::write_to_file(string filename){
 	outFile.flush();
 }
 
+//Writes a vector of purchases, appending
 void write_purchase_list(vector<AllPurchases*> purchases, string filename){
 	ofstream outFile;
 	for(int i = 0; i < purchases.size(); i++){
@@ -87,6 +90,7 @@ void write_purchase_list(vector<AllPurchases*> purchases, string filename){
 	}
 }
 
+//Writes a vector of purchases, truncating
 void write_purchase_file(vector<AllPurchases*> purchases, string filename){
 	ofstream outFile;
 	outFile.open(filename, ios_base::trunc);
