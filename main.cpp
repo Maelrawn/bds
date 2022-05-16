@@ -21,9 +21,15 @@ int main(int argv, char** argc){
 	string purchaseFile = argc[2];
 	vector<AllCustomers*> AllCustomers 
 		= populate_customers_from_file(customerFile, purchaseFile);
+	// for(int i = 0; i < AllCustomers.size(); i++){
+	// 	cout<<AllCustomers.at(i)->get_firstn()<<'\n';
+	// 	for(int j = 0; j < AllCustomers.at(i)->get_purchases().size(); j++){
+	// 		cout<<AllCustomers.at(i)->get_purchases().at(j)->get_item()<<'\n';
+	// 	}
+	// }
 	init_curses();
-	intro_graphic();
-	
+	//intro_graphic();
+	main_menu(AllCustomers);
 	endwin();
 	curs_set(2);
 };

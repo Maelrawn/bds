@@ -20,8 +20,8 @@ private:
 public:
 	
 	AllPurchases(string item, string date,
-			 int amount, int account,
-			 double price);	
+			 int amount, double price,
+			 int account);	
 	AllPurchases();
 	~AllPurchases();
 
@@ -40,7 +40,6 @@ public:
 	bool operator==(AllPurchases& rhs);
 	bool operator<=(AllPurchases& rhs);
 
-	void print();
 	void write_to_file(string filename);
 };
 

@@ -64,7 +64,7 @@ void intro_graphic(){
 				mvaddch(HEIGHT - j, WIDTH-i, ACS_CKBOARD);
 			attroff(COLOR_PAIR(1));
 			refresh();
-			usleep(5000);
+			usleep(2500);
 		}
 		clear_screen_intro();
 	}
@@ -77,19 +77,19 @@ void intro_graphic(){
 void clear_rectangle(int x1, int x2, int y1, int y2){
    for(int x = x1; x < x2 - 1; x++)
        for(int y = y1; y < y2; y++)
-          mvaddch(x, y, ' ');
+          mvaddch(y, x, ' ');
 }
 
 //Outlines our window with a character
 void draw_fullscreen_border(){
    for(int x = 0; x < WIDTH; x++){   //Top and bottom borders
       mvaddch(0, x, ACS_CKBOARD);
-      mvaddch(24, x, ACS_CKBOARD);
+      mvaddch(HEIGHT, x, ACS_CKBOARD);
    }
 
    for(int y = 0; y < HEIGHT; y++){   //Left and right borders
       mvaddch(y, 0, ACS_CKBOARD);
-      mvaddch(y, WIDTH, ACS_CKBOARD);
+      mvaddch(y, WIDTH - 1, ACS_CKBOARD);
    }
 }
 
@@ -108,22 +108,23 @@ int calculate_offset(int maxitem, int idx){
 void highlight_option(int option, int column, int maxoption){
    string icon = "->";
    option = calculate_offset(maxoption, option);
-   mvaddstr(6 + 2 * option, 2 + 15 * column, icon.c_str());
+   mvaddstr(6 + 2 * option, 2 + 25 * column, icon.c_str());
 }
 
 //Cleans up the arrow left behind when we switch options
 void clear_option(int option, int column, int maxoption){
    string icon = "  ";
    option = calculate_offset(maxoption, option);
-   mvaddstr(6 + 2 * option, 2 + 15 * column, icon.c_str());
+   mvaddstr(6 + 2 * option, 2 + 25 * column, icon.c_str());
 }
 
 //The thing at the top
 void draw_header(){
-   string header = " Business Documentation Software BDS  |  arrows move, esc backs";
+   string header = 
+   		" Business Documentation Software BDS  |     W A S D move, backspace backs";
    mvaddch(1, 40, '|');
    mvaddch(3, 40, '|');
-   mvhline(4, 1, '-', 76);
+   mvhline(4, 1, '-', 78);
    mvaddstr(2, 2, header.c_str());
 }
 
@@ -147,37 +148,105 @@ void display_main_menu_options(){
 void display_customer_header(vector<AllCustomers*> customers, int idx){
     vector<string> menudata;
     AllCustomers* customer = customers.at(idx);
-    menudata.push_back(customer->get_firstn());
-    menudata.push_back(customer->get_lastn());
-    menudata.push_back(to_string(customer->get_phone()));
-    menudata.push_back(to_string(customer->get_acc()));
-    menudata.push_back(customer->get_addr());
-    menudata.push_back(customer->get_city());
-    menudata.push_back(customer->get_state());
-    menudata.push_back(to_string(customer->get_zip()));
-	for(int j = 0; j < 2; j++){	   
-   		for(int i = 0; i < menudata.size()/2; i++){
-      		mvaddstr(6 + 2*j, 3+ 15 * i, menudata.at(i).c_str());
-   		}
-   	}
+    menudata.push_back(		customer->get_firstn()+ " "
+    				   	+ 	customer->get_lastn() + ", "
+    				   	+	customer->get_phone() + ", account no. "
+    				   	+ 	to_string(customer->get_acc()));
+    menudata.push_back(		customer->get_addr() + ", "
+    					+	customer->get_city() + ", "
+    					+	customer->get_state()+ ", "
+    					+	customer->get_zip());
+    double sum = 0;
+    for(int i = 0; i < customer->get_purchases().size(); i++){
+    	sum += 		customer->get_purchases().at(i)->get_price()
+    			*	customer->get_purchases().at(i)->get_amount();
+    }
+    menudata.push_back(		customer->get_firstn() + " "
+    					+	customer->get_lastn() + "'s "
+    					+	"total expenditures: $"
+    					+	to_string(sum).substr(0, to_string(sum).size() - 4));
+	for(int i = 0; i < menudata.size(); i++){
+		mvaddstr(6 + 2*i, WIDTH/2 - menudata.at(i).size()/2 - 2, menudata.at(i).c_str());	
+	}
 }
 
 //Displays all purchases that will fit on the screen
-//TODO: Adjust sizing for header
 void display_purchases(vector<AllPurchases*> purchases, int idx){
    clear_rectangle(1, WIDTH, 11, HEIGHT);
-   int page = idx/8;
-   for(int i = 0; i < 8 && i + page * 8 < purchases.size(); i++){
-      mvaddstr(12 + 2*i, 5, purchases.at(page * 8 + i)->get_item().c_str());
+   vector<string> itemdata;
+   for(int i = idx; i < purchases.size(); i++){
+   		itemdata.push_back(		purchases.at(i)->get_date() + ": x"
+   							+	to_string(purchases.at(i)->get_amount()) + " "
+   							+	purchases.at(i)->get_item() + " for $"
+   							+	to_string(purchases.at(i)->get_price())
+   								.substr(0, to_string(purchases.at(i)->get_price()).size() - 4) + " each");
    }
+   for(int i = 0; i < purchases.size() - idx; i++){
+   		if(12 + 2*i <= HEIGHT - 3){
+		    mvaddstr(12 + 2*i, 5, itemdata.at(i).c_str());
+   		}
+   	}
    refresh();
 }
 
+
+
+char handle_2d_input(int maxitemx, int maxitemy, int& xidx, int& yidx){
+	char input = ' ';
+	string uparrow = "^";
+	string downarrow = "v";
+	string leftarrow = "<-";
+	string rightarrow = "->";
+	while(input != 127){
+		clear_rectangle(3, 7, 6, 8);
+		if(yidx > 0)
+			mvaddstr(6, 5, uparrow.c_str());
+		if(yidx < maxitemy)
+			mvaddstr(8, 5, downarrow.c_str());
+		if(xidx < maxitemx)
+			mvaddstr(7, 6, rightarrow.c_str());
+		if(xidx > 0)
+			mvaddstr(7, 3, leftarrow.c_str());
+		refresh();
+		input = getch();
+		switch(input){
+			case 's':
+				if(yidx < maxitemy){
+					yidx++;
+				}
+			break;
+			case 'w':
+				if(yidx > 0){
+					yidx--;
+				}
+			break;
+			case 'a':
+				if(xidx > 0){
+					xidx--;
+					yidx = 0;
+				}
+			break;
+			case 'd':
+				if(xidx < maxitemx){
+					xidx++;
+					yidx = 0;
+				}
+			break;
+			case '\n':
+				return '\n';
+			break;
+		}
+		if(input == 127)
+			xidx = -1;
+			return input;
+	}
+}
+
 //Handles vertical menus
-int handleVertInput(int maxitem, int column){
+int handle_vert_in(int maxitem, int column){
    char input = ' ';
    int menuitem = 0;
-   while(input != '`'){
+   while(input != 127){
       highlight_option(menuitem, column, maxitem);
       refresh();
       input = getch();
@@ -201,98 +270,21 @@ int handleVertInput(int maxitem, int column){
    return -1;
 }
 
-//Handles vertical menus with pagination. Could the previous
-//function have just been this function? Probably. Did I realize
-//this before it was worth refactoring? Nope.
-char handleVertInputScr(int maxitem, int column, int &menuitem){
-   char input = ' ';
-   while(input != '`'){
-      highlight_option(menuitem, column, maxitem);
-      refresh();
-      input = getch();
-      clear_option(menuitem, column, maxitem);
-      switch(input){
-         case '\n':
-            return input;
-         break;
-//creating pagination was satanic trial and error, black magic code below 
-         case 'w':
-            if(menuitem > 0 && menuitem %9 != 0){
-               menuitem--;
-            }
-            else if((menuitem%9) == 0 && menuitem != 0){
-               menuitem--;
-               return ' ';
-            }
-         break;
-         case 's':
-            if(menuitem < maxitem - 1 && menuitem %8 != 0){
-               menuitem++;
-            }
-            else if((menuitem % 8) == 0){
-               menuitem++;
-               return ' ';
-            }
-         break;
-      }
-   }
-   return '`';
-}
-
-//Handles horizontal menus
-void handleHorInput(int maxitem, int &menuitem){
-   char input = ' ';
-   string left = "<-";
-   string right = "->";
-   string clear = "           ";
-   while(input != '`'){
-      if(menuitem > 0){
-         mvaddstr(5, 35, left.c_str());
-      }
-      if(menuitem < maxitem - 1){
-         mvaddstr(5, 40, right.c_str());
-      }
-      refresh();
-      input = getch();
-      mvaddstr(5, 34, clear.c_str());
-      switch(input){
-         case KEY_BACKSPACE: //stackexchange says backspace can output all
-		 case 127:			 //3 of these things depending on platform
-		 case '\b':
-            menuitem = -1;
-            return;
-         case KEY_RIGHT:
-            if(menuitem > 0){
-               menuitem--;
-               return;
-            }
-         break;
-         case KEY_LEFT:
-            if(menuitem < maxitem - 1){
-               menuitem++;
-               return;
-            }
-         break;
-      }
-   }
-   return;
-}
-
 //Because we used cbreak() to disable text inputs being immediately
 //displayed in the terminal, we need a function to simulate that
 //functionality. Now featuring backspace!
-string handleTextIn(int column, int row){
+string handle_text_in(int column, int row){
    char ch = ' ';
    int i = 0;
    string str;
    while(ch != '\n' && i >= 0){
       ch = getch();
-      if(ch == KEY_BACKSPACE || ch == '127' || ch == '\b'){
-      	mvaddch(6 + 2 * row, i + 15 * column, ' ');
-      	str.pop_back();
-       i--;
-      }
-      else if(ch != '\n'){
+      // if(ch == 127 && str.size() > 0){
+      //  i--;
+      // 	mvaddch(6 + 2 * row, i + 15 * column, ' ');
+      // 	str.pop_back();
+      // }
+      if(ch != '\n'){
          mvaddch(6 + 2 * row, i + 15 * column, ch);
          str.push_back(ch);
       	 i++;
@@ -305,7 +297,7 @@ string handleTextIn(int column, int row){
 //I was getting a crash on stoi(string-with-nonnumeric character input),
 //so I wanted to take that out. This does it by only permitting numeric
 //characters to be entered.
-string handleNumericIn(int column, int row){
+string handle_numeric_in(int column, int row){
    string expr = "[0-9]";
    regex regex (expr);
    char ch = ' ';
@@ -320,11 +312,11 @@ string handleNumericIn(int column, int row){
          mvaddch(6 + 2 * row, i + 15 * column, ch);
          str.push_back(ch);
       }
-      else if(ch == KEY_BACKSPACE || ch == '127' || ch == '\b'){
-      	 mvaddch(6 + 2 * row, i + 15 * column, ' ');
-      	 str.pop_back();
-      	 i--;
-      }
+      // else if(ch == 127){
+      // 	 i--;
+      // 	 mvaddch(6 + 2 * row, i + 15 * column, ' ');
+      // 	 str.pop_back();
+      // }
       refresh();
    }
    if(str.size() <= to_string(INT_MAX).size())
@@ -332,81 +324,285 @@ string handleNumericIn(int column, int row){
    else
       return to_string(INT_MAX);
 }
-/*
+
+
+void edit_purchase(AllPurchases* &purchase){
+	clear_rectangle(1, WIDTH, 6, HEIGHT);
+    int selection = 0;
+    vector<string> fields = {"Item name: " + purchase->get_item(),
+							"Date: " + purchase->get_date(),
+							"Amount: " + to_string(purchase->get_amount()),
+							"Price: $" + to_string(purchase->get_price()).substr(0, to_string(purchase->get_price()).size()-4),
+							"Finish",
+							"Account Number: " + to_string(purchase->get_acc())};
+    string label = "Edit Purchase";
+    for(int i = 0; i < fields.size(); i++){
+		mvaddstr(6 + 2*i, 5, fields.at(i).c_str());
+    }
+	mvaddstr(5, 33, label.c_str());
+    refresh();
+    while(selection != -1){
+	    selection = handle_vert_in(5, 0);
+	    curs_set(1);
+	    switch(selection){
+	    	case 0:
+	    		clear_rectangle(16, WIDTH, 6, 7);
+	    		purchase->set_item(handle_text_in(2, selection));
+	    		break;
+	    	case 1:
+	    		clear_rectangle(10, WIDTH, 8, 9);
+	    		purchase->set_date(handle_text_in(2, selection));
+	    		break;
+	    	case 2:
+	    		clear_rectangle(13, WIDTH, 10, 11);
+	    		purchase->set_amount(stoi(handle_numeric_in(2, selection)));
+	    		break;
+	    	case 3:
+	    		clear_rectangle(13, WIDTH, 12, 13);
+	    		purchase->set_price(stof(handle_text_in(2, selection)));
+	    		break;
+	    	case 4:
+	    		selection = -1;
+	    		break;
+	    }
+	curs_set(0);
+	}
+}
+
+void edit_customer(AllCustomers* &customer){
+	clear_rectangle(1, WIDTH, 6, HEIGHT);
+    int selection = 0;
+    vector<string> fields = {"First name: " + customer->get_firstn(),
+							"Last name: " + customer->get_lastn(),
+							"Address: " + customer->get_addr(),
+							"City: " + customer->get_city(),
+							"State: "+ customer->get_state(),
+							"Zip Code: " + customer->get_zip(),
+							"Phone Number: " + customer->get_phone(),
+							"Finish",
+							"Account Number: " + to_string(customer->get_acc())};
+    string label = "Edit Customer";
+    for(int i = 0; i < fields.size(); i++){
+		mvaddstr(6 + 2*i, 5, fields.at(i).c_str());
+    }
+	mvaddstr(5, 33, label.c_str());
+    refresh();
+    while(selection != -1){
+	    selection = handle_vert_in(8, 0);
+	    curs_set(1);
+	    switch(selection){
+	    	case 0:
+	    		clear_rectangle(16, WIDTH, 6, 7);
+	    		customer->set_firstn(handle_text_in(2, selection));
+	    		break;
+	    	case 1:
+	    		clear_rectangle(15, WIDTH, 8, 9);
+	    		customer->set_lastn(handle_text_in(2, selection));
+	    		break;
+	    	case 2:
+	    		clear_rectangle(13, WIDTH, 10, 11);
+	    		customer->set_addr(handle_text_in(2, selection));
+	    		break;
+	    	case 3:
+	    		clear_rectangle(11, WIDTH, 12, 13);
+	    		customer->set_city(handle_text_in(2, selection));
+	    		break;
+	    	case 4:
+	    		clear_rectangle(12, WIDTH, 14, 15);
+	    		customer->set_state(handle_text_in(2, selection));
+	    		break;
+	    	case 5:
+	    		clear_rectangle(14, WIDTH, 16, 17);
+	    		customer->set_zip(handle_text_in(2, selection));
+	    		break;
+	    	case 6:
+	    		clear_rectangle(18, WIDTH, 18, 19);
+	    		customer->set_phone(handle_text_in(2, selection));
+	    		break;
+	    	case 7:
+	    		selection = -1;
+	    		break;
+	    }
+	curs_set(0);
+	}
+}
+
 //Routine for displaying lots of data about our collection of books
-void browseLibrary(vector<Book*> library){
-   int idx = 0;
-   while(idx != -1){
-      display_browse_book(library, idx);
-      handleHorInput(library.size(), idx);
+void browse_customers(vector<AllCustomers*> &customers){
+   int xidx = 0;
+   int yidx = 0;
+   char input = ' ';
+   while(xidx != -1){
+      clear_rectangle(0, WIDTH, 0, HEIGHT);
+   	  draw_fullscreen_border();
+   	  draw_header();
+      display_customer_header(customers, xidx);
+      display_purchases(customers.at(xidx)->get_purchases(), yidx);
+      highlight_option(3, 0, 5);
+      input = handle_2d_input(	customers.size()-1, 
+      							customers.at(xidx)->get_purchases().size()-1,
+      							xidx,
+      							yidx);
+      clear_option(3, 0, 5);
+      if(input == '\n'){
+      	edit_purchase(customers.at(xidx)->get_purchases().at(yidx));
+      }
    }
 }
 
-//Creates a new book with user input and puts it into our library
-void createBook(vector<Book*> &library){
-   vector<string> bookData;
-   string label = "Create Book";
-   display_create_labels();
-   mvaddstr(5, 33, label.c_str());
-   for(int i = 0; i < 7; i++){
-      highlight_option(i, 0, i);
-      if(i != 4){
-         bookData.push_back(handleTextIn(1, i));
-      }
-      else{
-         bookData.push_back(handleNumericIn(1, i));
-      }
-      draw_fullscreen_border('X');
-   }
-   Book* book = new Book(  bookData[0],
-                           bookData[1],
-                           bookData[2],
-                           bookData[6],
-                           bookData[3],
-                      stoi(bookData[4]),
-                      stob(bookData[5]));
-   library.push_back(book);
+// void browse_customers(vector<AllCustomers*> &customers){
+//    int xidx = 0;
+//    int yidx = 0;
+//    char input = ' ';
+//    while(xidx != -1){
+//       clear_rectangle(0, WIDTH, 0, HEIGHT);
+//    	  draw_fullscreen_border();
+//    	  draw_header();
+//       display_customer_header(customers, xidx);
+//       display_purchases(customers.at(xidx)->get_purchases(), yidx);
+//       highlight_option(3, 0, 5);
+//       input = handle_2d_input(	customers.size()-1, 
+//       							customers.at(xidx)->get_purchases().size()-1,
+//       							xidx,
+//       							yidx);
+//       clear_option(3, 0, 5);
+//       if(input == '\n'){
+//       	edit_purchase(customers.at(xidx)->get_purchases().at(yidx));
+//       }
+//    }
+// }
+
+//TODO: MENU FOR EDITING A CUSTOMER
+
+//TODO: MENU FOR ADDING A PURCHASE TO A CUSTOMER
+
+//TODO: FUNCTION FOR DELETING A CUSTOMER
+
+//TODO: FUNCTION FOR DELETING A PURCHASE
+
+void display_sort_options(){
+	vector<string> menuitems = {"Items, ascending",
+								"Items, descending",
+								"Date, ascending",
+								"Date, descending",
+								"Price, ascending",
+								"Price, descending"};
+	for(int i = 0; i < menuitems.size(); i++){
+		mvaddstr(6 + 2*i, 30, menuitems.at(i).c_str());
+	}
 }
 
+void sort_customer_purchases(vector<AllCustomers*> &customers){
+	int flag = 0;
+	display_sort_options();
+	flag = handle_vert_in(6, 1);
+	if(flag != -1){
+		for(int i = 0; i < customers.size(); i++){
+			customers.at(i)->sort_purchases(flag);
+		}
+		flag = -1;
+	}
+}
+
+//Creates a new customer with user input and puts it into our customers
+void add_customer(vector<AllCustomers*> &customers){
+    AllCustomers* customer = new AllCustomers();
+	clear_rectangle(1, WIDTH, 6, HEIGHT);
+    int selection = 0;
+    vector<string> data = {" ", " ", " ", " ", " ", " ", " "};
+    vector<string> fields = {"First name:",
+							"Last name:",
+							"Address:",
+							"City:",
+							"State:",
+							"Zip Code:",
+							"Phone Number:",
+							"Finish",
+							"Account Number: " + to_string(customer->get_acc())};
+    string label = "Add Customer";
+    for(int i = 0; i < fields.size(); i++){
+		mvaddstr(6 + 2*i, 5, fields.at(i).c_str());
+    }
+	mvaddstr(5, 33, label.c_str());
+    refresh();
+    while(selection != -1){
+	    selection = handle_vert_in(8, 0);
+	    curs_set(1);
+	    if(selection != -1 && selection < 5){
+	        data.at(selection) = handle_text_in(2, selection);
+	    }
+	    else if(selection != -1 && selection != 7){
+	   		data.at(selection) = handle_numeric_in(2, selection);
+	    }
+	    else if(selection == 7){
+			customer->set_firstn(data.at(0));
+			customer->set_lastn(data.at(1));
+			customer->set_addr(data.at(2));
+			customer->set_city(data.at(3));
+			customer->set_state(data.at(4));
+			customer->set_zip(data.at(5));
+			customer->set_phone(data.at(6));
+			customers.push_back(customer);
+			for(int i = WIDTH/4; i < 3 * WIDTH/4; i++){
+				for(int j = 3*HEIGHT/5; j < 4*HEIGHT/5; j++){
+					mvaddch(j, i, ' ');
+				}
+			}
+			string prompt = "Register another user? Y/N";
+			mvaddstr(12, 30, prompt.c_str());
+			refresh();
+			curs_set(0);
+			char yn = getch();
+			if(yn == 'Y' || yn == 'y'){
+				add_customer(customers);
+			}
+			else
+				selection = -1;
+		}
+	}
+	curs_set(0);
+}
+
+/*
 //Changes a field in a book, then returns to the book selection menu
-void editBook(vector<Book*> &library){
+void editBook(vector<AllCustomers*> &customers){
    int idx = 0;
    int option = 0;
    char ch = ' ';
    while(ch != '`'){
-      display_titles(library, idx);
-      ch = handleVertInputScr(library.size(), 0, idx);
+      display_titles(customers, idx);
+      ch = handle_vert_in_scr(customers.size(), 0, idx);
       if(ch == '\n'){
-         display_browse_book(library, idx);
-         option = handleVertInput(7, 0);
+         display_browse_book(customers, idx);
+         option = handle_vert_in(7, 0);
          if(option != -1)
             mvhline(6 + 2 * option, HEIGHT, ' ', 53);
          switch(option){
             case 0:
-               library.at(idx)->setTitle(handleTextIn(1, option));
+               customers.at(idx)->setTitle(handle_text_in(1, option));
                break;
             case 1:
-               library.at(idx)->setAuthor(handleTextIn(1, option));
+               customers.at(idx)->setAuthor(handle_text_in(1, option));
                break;
             case 2:
-               library.at(idx)->setPublisher(handleTextIn(1, option));
+               customers.at(idx)->setPublisher(handle_text_in(1, option));
                break;
             case 3:
-               library.at(idx)->setDate(handleTextIn(1, option));
+               customers.at(idx)->setDate(handle_text_in(1, option));
                break;
             case 4:
-               library.at(idx)->setPageCount(
-                                 stoi(handleNumericIn(1, option)));
+               customers.at(idx)->setPageCount(
+                                 stoi(handle_numeric_in(1, option)));
                break;
             case 5:
-               library.at(idx)->setComplete(
-                                 stob(handleTextIn(1, option)));
+               customers.at(idx)->setComplete(
+                                 stob(handle_text_in(1, option)));
                break;
             case 6:
-               library.at(idx)->setExcerpt(handleTextIn(1, option));
+               customers.at(idx)->setExcerpt(handle_text_in(1, option));
                break;
          }
-         sortByAuthorAndTitle(library);
+         sortByAuthorAndTitle(customers);
          idx = 0;
          ch = ' ';
       }
@@ -414,15 +610,15 @@ void editBook(vector<Book*> &library){
 }
 
 //Groups books by publisher and allows you to view only grouped books
-void browseByPublisher(vector<Book*> library){
+void browseByPublisher(vector<AllCustomers*> customers){
    clear_workspace();
    vector<string> publishers;
    vector<Book*> books;
    string pub;
    char ch = ' ';
    bool exists;
-   for(int i = 0; i < library.size(); i++){
-      pub = library.at(i)->getPublisher();
+   for(int i = 0; i < customers.size(); i++){
+      pub = customers.at(i)->getPublisher();
       exists = false;
       for(int j = 0; j < publishers.size(); j++){
          if(pub == publishers.at(j)){
@@ -438,15 +634,15 @@ void browseByPublisher(vector<Book*> library){
       for(int i = 0; i < publishers.size(); i++){
          mvaddstr(6 + 2*i, 5, publishers.at(i).c_str());   
       }
-      ch = handleVertInputScr(publishers.size(), 0, idx);
+      ch = handle_vert_in_scr(publishers.size(), 0, idx);
       if(ch == '\n'){
          pub = publishers.at(idx);
-         for(int i = 0; i < library.size(); i++){
-            if(library.at(i)->getPublisher() == pub){
-               books.push_back(library.at(i));
+         for(int i = 0; i < customers.size(); i++){
+            if(customers.at(i)->getPublisher() == pub){
+               books.push_back(customers.at(i));
             }
          }
-         browseLibrary(books);
+         browse_customers(books);
          books.clear();
          clear_workspace();
          idx = 0;
@@ -455,21 +651,21 @@ void browseByPublisher(vector<Book*> library){
    }
 }
 
-
-//Writes our library contents to a file of our choosing.
+*/
+//Writes our customers contents to a file of our choosing.
 //Don't put a backspace in the name or you'll never be able to type it
-void saveQuit(vector<Book*> library){
-   string prompt = "-> Enter a filename: ";
-   mvaddstr(16, 19, prompt.c_str());
-   refresh();
-   prompt = handleTextIn(2, 5);
-   for(int i = 0; i < library.size(); i++){
-      library.at(i)->writeToFile(prompt);
-   }
-}
+// void save_quit(vector<AllCustomers*> customers){
+//    string prompt = "-> Enter a filename: ";
+//    mvaddstr(16, 19, prompt.c_str());
+//    refresh();
+//    prompt = handle_text_in(2, 5);
+//    for(int i = 0; i < customers.size(); i++){
+//       customers.at(i)->writeToFile(prompt);
+//    }
+// }
 
 //Routine to collect all of the functionality we have built
-void mainMenu(vector<AllCustomers*> &customers){
+void main_menu(vector<AllCustomers*> &customers){
    int option = 3;
    while(option != -1){
       clear_rectangle(1, WIDTH, 6, HEIGHT);
@@ -477,32 +673,29 @@ void mainMenu(vector<AllCustomers*> &customers){
       draw_header();
       display_main_menu_options();
       refresh();
-      if(customers.size() > 0){
-         option = handleVertInput(7, 0);
-         (library);
-      }
+      option = handle_vert_in(7, 0);
       switch(option){
             case -1:
-               break;
+                break;
             case 0:
-               browseLibrary(library);
-               break;
+                browse_customers(customers);
+                break;
             case 1: 
-               browseByPublisher(library);
-               break;
+				sort_customer_purchases(customers);	
+				break;
             case 2:
-               readBook(library);
-               break;
-            case 3:
-               createBook(library);
-               break;
-            case 4:
-               editBook(library);
-               break;
-            case 5:
-               saveQuit(library);
-               endwin();
-               return;
+                add_customer(customers);
+            	break;
+            // case 3:
+            //    createBook(customers);
+            //    break;
+            // case 4:
+            //    editBook(customers);
+            //    break;
+            // case 5:
+            //    save_quit(customers);
+            //    endwin();
+            //    return;
             case 6:
                endwin();
                return;
@@ -511,7 +704,7 @@ void mainMenu(vector<AllCustomers*> &customers){
    endwin();
    return;
 }
-*/
+
 void init_curses(){
    initscr();           //This block of stuff starts Curses mode,
    cbreak();            //disables the input buffer (inputs sent immediately after keypress), 

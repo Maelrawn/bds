@@ -1,14 +1,24 @@
 #ifndef CUSTOMER_C
 #define CUSTOMER_C
+
 #include "customer.hpp"
 
-
-AllCustomers::AllCustomers(){};
-AllCustomers::~AllCustomers(){};
+AllCustomers::AllCustomers()
+	:firstName(" "), lastName(" "), address(" "), city(" "),
+	 state(" "), zip(" "), phone(" "){
+	 	account = accountmax;
+	 	accountmax++;
+	 };
+AllCustomers::~AllCustomers(){
+	for(int i = 0; i < purchases.size(); i++){
+		delete purchases.at(i);
+	}
+	delete this;
+};
 AllCustomers::AllCustomers(string firstn, 	string lastn,
 						   string addr, 	string city,
-						   string state,	int zip,
-						   int phone,		int acc):
+						   string state,	string zip,
+						   string phone,	int acc):
 						firstName(firstn), 	lastName(lastn),
 						address(addr), 		city(city),
 						state(state),		zip(zip),
@@ -33,10 +43,10 @@ string AllCustomers::get_city(){
 string AllCustomers::get_state(){
 	return state;
 }
-int AllCustomers::get_zip(){
+string AllCustomers::get_zip(){
 	return zip;
 }
-int AllCustomers::get_phone(){
+string AllCustomers::get_phone(){
 	return phone;
 }
 int AllCustomers::get_acc(){
@@ -61,10 +71,10 @@ void AllCustomers::set_city(string in){
 void AllCustomers::set_state(string in){
 	state = in;
 }
-void AllCustomers::set_zip(int in){
+void AllCustomers::set_zip(string in){
 	zip = in;
 }
-void AllCustomers::set_phone(int in){
+void AllCustomers::set_phone(string in){
 	phone = in;
 }
 
@@ -77,8 +87,6 @@ bool AllCustomers::operator==(AllCustomers& rhs){
 bool AllCustomers::operator<=(AllCustomers& rhs){
 	return this->account <= rhs.account;
 }
-
-void AllCustomers::print(){}
 
 void AllCustomers::get_purchases_from_vector(vector<AllPurchases*> allPurchases){
 	for(int i = 0; i < allPurchases.size(); i++){
@@ -100,12 +108,12 @@ double AllCustomers::get_purchase_sum(){
 //I feel like a genius after seeing this compile
 //flags are 0, 1, 2, 3, 4, 5; item asc/desc, date asc/desc, price asc/desc
 void AllCustomers::sort_purchases(int flag){
-	auto itemasc = [&](AllPurchases* lpurchase, AllPurchases* rpurchase){
+	auto itemdesc = [&](AllPurchases* lpurchase, AllPurchases* rpurchase){
 		string lstring = lpurchase->get_item();
 		string rstring = rpurchase->get_item();
 		int cmplen = min(lstring.size(), rstring.size());
-		for(int i = 0; i < cmplen; i++){
-			if(lstring[i] < rstring[i]){
+		for(int i = 0; i < cmplen - 1; i++){
+			if((int)lstring[i] < (int)rstring[i]){
 				return true;
 			}
 		}
@@ -113,12 +121,12 @@ void AllCustomers::sort_purchases(int flag){
 			return true;
 		return false;
 	};
-	auto itemdesc = [&](AllPurchases* lpurchase, AllPurchases* rpurchase){
+	auto itemasc = [&](AllPurchases* lpurchase, AllPurchases* rpurchase){
 		string lstring = lpurchase->get_item();
 		string rstring = rpurchase->get_item();
 		int cmplen = min(lstring.size(), rstring.size());
 		for(int i = 0; i > cmplen; i++){
-			if(lstring[i] > rstring[i]){
+			if((int)lstring[i] > (int)rstring[i]){
 				return true;
 			}
 		}
@@ -126,50 +134,48 @@ void AllCustomers::sort_purchases(int flag){
 			return true;
 		return false;
 	};
-	auto dateasc = [&](AllPurchases* lpurchase, AllPurchases* rpurchase){
-		string lstring = lpurchase->get_date();
-		string rstring = rpurchase->get_date();
-		int lsize = lstring.size() - 1;
-		int rsize = rstring.size() - 1;
-		vector<int> datevals;
-		datevals.push_back(stoi(lstring.substr(lsize - 3, lsize)));
-		datevals.push_back(stoi(lstring.substr(3, 4)));
-		datevals.push_back(stoi(lstring.substr(0, 1)));
-		datevals.push_back(stoi(rstring.substr(0, 1)));
-		datevals.push_back(stoi(rstring.substr(3, 4)));
-		datevals.push_back(stoi(rstring.substr(rsize - 3, rsize)));
-		for(int i = 0; i < 3; i++){
-			if(datevals[i] < datevals[datevals.size() - (i + 1)]){
-				return true;
-			}
-		}
-		return false;
-	};
 	auto datedesc = [&](AllPurchases* lpurchase, AllPurchases* rpurchase){
 		string lstring = lpurchase->get_date();
 		string rstring = rpurchase->get_date();
-		int lsize = lstring.size() - 1;
-		int rsize = rstring.size() - 1;
 		vector<int> datevals;
-		datevals.push_back(stoi(lstring.substr(lsize - 3, lsize)));
-		datevals.push_back(stoi(lstring.substr(3, 4)));
+		datevals.push_back(stoi(lstring.substr(6, 9)));
+		datevals.push_back(stoi(rstring.substr(6, 9)));
 		datevals.push_back(stoi(lstring.substr(0, 1)));
 		datevals.push_back(stoi(rstring.substr(0, 1)));
+		datevals.push_back(stoi(lstring.substr(3, 4)));
 		datevals.push_back(stoi(rstring.substr(3, 4)));
-		datevals.push_back(stoi(rstring.substr(rsize - 3, rsize)));
-		for(int i = 0; i < 3; i++){
-			if(datevals[i] > datevals[datevals.size() - (i + 1)]){
+		for(int i = 0; i < 5; i++){
+			if(datevals[i] < datevals[i+1]){
 				return true;
 			}
+			i++;
 		}
 		return false;
 	};
-	auto priceasc = [&](AllPurchases* lpurchase, AllPurchases* rpurchase){
+	auto dateasc = [&](AllPurchases* lpurchase, AllPurchases* rpurchase){
+		string lstring = lpurchase->get_date();
+		string rstring = rpurchase->get_date();
+		vector<int> datevals;
+		datevals.push_back(stoi(lstring.substr(6, 9)));
+		datevals.push_back(stoi(rstring.substr(6, 9)));
+		datevals.push_back(stoi(lstring.substr(0, 1)));
+		datevals.push_back(stoi(rstring.substr(0, 1)));
+		datevals.push_back(stoi(lstring.substr(3, 4)));
+		datevals.push_back(stoi(rstring.substr(3, 4)));
+		for(int i = 0; i < 5; i++){
+			if(datevals[i] > datevals[i+1]){
+				return true;
+			}
+			i++;
+		}
+		return false;
+	};
+	auto pricedesc = [&](AllPurchases* lpurchase, AllPurchases* rpurchase){
 		if(lpurchase->get_price() < rpurchase->get_price())
 			return true;
 		return false;
 	};
-	auto pricedesc = [&](AllPurchases* lpurchase, AllPurchases* rpurchase){
+	auto priceasc = [&](AllPurchases* lpurchase, AllPurchases* rpurchase){
 		if(lpurchase->get_price() > rpurchase->get_price())
 			return true;
 		return false;
@@ -177,14 +183,15 @@ void AllCustomers::sort_purchases(int flag){
 
 	vector<function<bool(AllPurchases*, AllPurchases*)>> funcvec 
 		= {itemasc, itemdesc, dateasc, datedesc, priceasc, pricedesc};
-
+	
 	AllPurchases* tmp;
-	for(int i = 0; i < purchases.size(); i++){
-		for(int j = 0; j < purchases.size() - 1; j++){
-			if(funcvec.at(i)(purchases.at(i), purchases.at(i + 1))){
-				*tmp = *purchases.at(i);
-				*purchases.at(i) = *purchases.at(i+1);
-				*purchases.at(i+1) = *tmp;
+	
+	for(int j = 0; j < purchases.size(); j++){
+		for(int i = 0; i < purchases.size() - 1; i++){
+			if(funcvec.at(flag)(purchases.at(i), purchases.at(i + 1))){
+				tmp = purchases.at(i+1);
+				purchases.at(i+1) = purchases.at(i);
+				purchases.at(i) = tmp;
 			}
 		}
 	}
@@ -196,15 +203,19 @@ void AllCustomers::populate_purchases(string filename){
 	vector<string> inV;
 	inFile.open(filename);
 	while(getline(inFile, tmp)){
-		if(tmp[0] == '$')
+		if(tmp[0] == '$'){
 			tmp = tmp.substr(1, tmp.size()-1);
+		}
 		inV.push_back(tmp);
-		if(inV.size() == 5 && stoi(inV.at(4)) == this->account){
-			purchases.push_back(new AllPurchases(  inV.at(0), 
+		if(inV.size() == 5 && stoi(inV.at(4)) == account){
+			purchases.push_back(new AllPurchases(inV.at(0), 
 						    					inV.at(1), 
 										   stoi(inV.at(2)), 
 			 		  					   stof(inV.at(3)),
 			 		  					   stoi(inV.at(4))));
+			inV.clear();
+		}
+		else if(inV.size() == 5){
 			inV.clear();
 		}
 	}
@@ -225,8 +236,8 @@ vector<AllCustomers*> populate_customers_from_file(string cfile, string pfile){
 						    					inV.at(2),
 						    					inV.at(3),
 						    					inV.at(4), 
-										   stoi(inV.at(5)), 
-			 		  					   stoi(inV.at(6)),
+										   		inV.at(5), 
+			 		  					   		inV.at(6),
 			 		  					   stoi(inV.at(7))));
 			inV.clear();
 		}
@@ -234,6 +245,16 @@ vector<AllCustomers*> populate_customers_from_file(string cfile, string pfile){
 	inFile.close();
 	for(int i = 0; i < output.size(); i++){
 		output.at(i)->populate_purchases(pfile);
+	}
+	AllCustomers* tmp2;
+	for(int i = 0; i < output.size(); i++){
+		for(int j = 0; j < output.size()-1; j++){
+			if(output.at(j)->get_acc() < output.at(j+1)->get_acc()){
+				tmp2 = output.at(j);
+				output.at(j) = output.at(j+1);
+				output.at(j+1) = tmp2;
+			}
+		}
 	}
 	return output;
 }

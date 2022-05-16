@@ -12,10 +12,10 @@ private:
 	string lastName;
 	string address;
 	string city;
-	string state;
-	
-	int zip;
-	int phone;
+	string state;	
+	string zip;
+	string phone;
+
 	int account;
 
 public:
@@ -24,8 +24,8 @@ public:
 	~AllCustomers();
 	AllCustomers(string firstn, string lastn,
 			     string addr, 	string city,
-				 string state,	int zip,
-				 int phone,		int acc);
+				 string state,	string zip,
+				 string phone,	int acc);
 
 	vector<AllPurchases*> get_purchases();
 	string get_firstn();
@@ -33,8 +33,8 @@ public:
 	string get_addr();
 	string get_city();
 	string get_state();
-	int get_zip();
-	int get_phone();
+	string get_zip();
+	string get_phone();
 	int get_acc();
 	
 	void add_purchase(AllPurchases* purchase);
@@ -43,8 +43,8 @@ public:
 	void set_addr(string in);
 	void set_city(string in);
 	void set_state(string in);
-	void set_zip(int in);
-	void set_phone(int in);
+	void set_zip(string in);
+	void set_phone(string in);
 	
 	bool operator<(AllCustomers& rhs);
 	bool operator==(AllCustomers& rhs);
@@ -57,7 +57,6 @@ public:
 
 	double get_purchase_sum();
 
-	void print();
 	void write_to_file(string filename);
 	
 };

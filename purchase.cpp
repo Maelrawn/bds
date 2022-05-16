@@ -4,8 +4,8 @@
 #include "purchase.hpp"
 
 AllPurchases::AllPurchases(string item, string date,
-		 int amount, int account,
-		 double price)
+		 int amount, double price,
+		 int account)
 		:item(item), date(date),
 		 amount(amount), account(account),
 		 price(price)
@@ -62,10 +62,6 @@ bool AllPurchases::operator==(AllPurchases& rhs){
 }
 bool AllPurchases::operator<=(AllPurchases& rhs){
 	return this->account <= rhs.account;
-}
-
-void AllPurchases::print(){
-	return;
 }
 
 void AllPurchases::write_to_file(string filename){
