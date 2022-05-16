@@ -21,6 +21,7 @@ int main_function(int argv, char** argc){
 	string purchaseFile = argc[2];
 	vector<AllCustomers*> AllCustomers 
 		= populate_customers_from_file(customerFile, purchaseFile);
+	sort_by_account(AllCustomers);
 	init_curses();
 	intro_graphic();
 	main_menu(AllCustomers);

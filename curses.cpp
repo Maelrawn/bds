@@ -189,6 +189,21 @@ void display_purchases(vector<AllPurchases*> purchases, int idx){
    refresh();
 }
 
+void display_customers(vector<AllCustomers*> &customers, int idx){
+   clear_rectangle(1, WIDTH, 11, HEIGHT);
+   vector<string> itemdata;
+   for(int i = idx; i < customers.size(); i++){
+   		itemdata.push_back(		customers.at(i)->get_firstn() + " "
+   							+	customers.at(i)->get_lastn());
+   }
+   for(int i = 0; i < customers.size() - idx; i++){
+   		if(12 + 2*i <= HEIGHT - 3){
+		    mvaddstr(12 + 2*i, 5, itemdata.at(i).c_str());
+   		}
+   	}
+   refresh();
+}
+
 
 
 char handle_2d_input(int maxitemx, int maxitemy, int& xidx, int& yidx){
@@ -325,6 +340,61 @@ string handle_numeric_in(int column, int row){
       return to_string(INT_MAX);
 }
 
+void add_purchase(AllCustomers* &customer){
+    AllPurchases* purchase = new AllPurchases();
+	clear_rectangle(1, WIDTH, 6, HEIGHT);
+    int selection = 0;
+    vector<string> data = {" ", " ", " ", " ", " ",};
+    vector<string> fields = {"Item Name:",
+							"Date of Purchase:",
+							"Amount:",
+							"Price:",
+							"Finish",
+							"Account: no. " + to_string(customer->get_acc())};
+    string label = "Add Purchase to Account " + to_string(customer->get_acc());
+    for(int i = 0; i < fields.size(); i++){
+		mvaddstr(6 + 2*i, 5, fields.at(i).c_str());
+    }
+	mvaddstr(5, WIDTH/2 - label.size()/2, label.c_str());
+    refresh();
+    while(selection != -1){
+	    selection = handle_vert_in(5, 0);
+	    curs_set(1);
+	    if(selection == 0 || selection == 1){
+	        data.at(selection) = handle_text_in(2, selection);
+	    }
+	    else if(selection == 2){
+	   		data.at(selection) = handle_numeric_in(2, selection);
+	    }
+	    else if(selection == 3){
+	    	data.at(selection) = handle_numeric_in(2, selection);
+	    }
+	    else if(selection == 4){
+			purchase->set_item(data.at(0));
+			purchase->set_date(data.at(1));
+			purchase->set_amount(stoi(data.at(2)));
+			purchase->set_price(stof(data.at(3)));
+			purchase->set_acc(customer->get_acc());
+			customer->add_purchase(purchase);
+			for(int i = 12; i < 30; i++){
+				for(int j = 11; j < 14; j++){
+					mvaddch(j, i, ' ');
+				}
+			}
+			string prompt = "Add another purchase? Y/N";
+			mvaddstr(12, 30, prompt.c_str());
+			refresh();
+			curs_set(0);
+			char yn = getch();
+			if(yn == 'Y' || yn == 'y'){
+				add_purchase(customer);
+			}
+			else
+				selection = -1;
+		}
+	}
+	curs_set(0);
+}
 
 void edit_purchase(AllPurchases* &purchase){
 	clear_rectangle(1, WIDTH, 6, HEIGHT);
@@ -379,16 +449,16 @@ void edit_customer(AllCustomers* &customer){
 							"State: "+ customer->get_state(),
 							"Zip Code: " + customer->get_zip(),
 							"Phone Number: " + customer->get_phone(),
-							"Finish",
-							"Account Number: " + to_string(customer->get_acc())};
-    string label = "Edit Customer";
+							"Add Purchase",
+							"Finish"};
+    string label = "Edit Customer no. " + to_string(customer->get_acc());
     for(int i = 0; i < fields.size(); i++){
 		mvaddstr(6 + 2*i, 5, fields.at(i).c_str());
     }
-	mvaddstr(5, 33, label.c_str());
+	mvaddstr(5, WIDTH/2 - label.size()/2, label.c_str());
     refresh();
     while(selection != -1){
-	    selection = handle_vert_in(8, 0);
+	    selection = handle_vert_in(9, 0);
 	    curs_set(1);
 	    switch(selection){
 	    	case 0:
@@ -420,6 +490,8 @@ void edit_customer(AllCustomers* &customer){
 	    		customer->set_phone(handle_text_in(2, selection));
 	    		break;
 	    	case 7:
+	    		add_purchase(customer);
+	    	case 8:
 	    		selection = -1;
 	    		break;
 	    }
@@ -428,7 +500,7 @@ void edit_customer(AllCustomers* &customer){
 }
 
 //Routine for displaying lots of data about our collection of books
-void browse_customers(vector<AllCustomers*> &customers){
+void browse_customer_list(vector<AllCustomers*> &customers){
    int xidx = 0;
    int yidx = 0;
    char input = ' ';
@@ -436,16 +508,15 @@ void browse_customers(vector<AllCustomers*> &customers){
       clear_rectangle(0, WIDTH, 0, HEIGHT);
    	  draw_fullscreen_border();
    	  draw_header();
-      display_customer_header(customers, xidx);
-      display_purchases(customers.at(xidx)->get_purchases(), yidx);
+      display_customers(customers, yidx);
       highlight_option(3, 0, 5);
-      input = handle_2d_input(	customers.size()-1, 
-      							customers.at(xidx)->get_purchases().size()-1,
+      input = handle_2d_input(	0, 
+      							customers.size()-1,
       							xidx,
       							yidx);
       clear_option(3, 0, 5);
       if(input == '\n'){
-      	edit_purchase(customers.at(xidx)->get_purchases().at(yidx));
+      	edit_customer(customers.at(yidx));
       }
    }
 }
@@ -474,11 +545,48 @@ void browse_customers(vector<AllCustomers*> &customers){
 
 //TODO: MENU FOR EDITING A CUSTOMER
 
-//TODO: MENU FOR ADDING A PURCHASE TO A CUSTOMER
+void browse_customers(vector<AllCustomers*> &customers){
+   int xidx = 0;
+   int yidx = 0;
+   char input = ' ';
+   while(xidx != -1){
+      clear_rectangle(0, WIDTH, 0, HEIGHT);
+   	  draw_fullscreen_border();
+   	  draw_header();
+   	  display_customer_header(customers, xidx);
+      display_purchases(customers.at(xidx)->get_purchases(), yidx);
+      highlight_option(3, 0, 5);
+      input = handle_2d_input(	customers.size() - 1, 
+      							customers.at(xidx)->get_purchases().size()-1,
+      							xidx,
+      							yidx);
+      clear_option(3, 0, 5);
+      if(input == '\n'){
+      	edit_purchase(customers.at(xidx)->get_purchases().at(yidx));
+      }
+   }
+}
 
-//TODO: FUNCTION FOR DELETING A CUSTOMER
-
-//TODO: FUNCTION FOR DELETING A PURCHASE
+void delete_customer(vector<AllCustomers*> &customers){
+   int xidx = 0;
+   int yidx = 0;
+   char input = ' ';
+   while(xidx != -1){
+      clear_rectangle(0, WIDTH, 0, HEIGHT);
+   	  draw_fullscreen_border();
+   	  draw_header();
+      display_customers(customers, yidx);
+      highlight_option(3, 0, 5);
+      input = handle_2d_input(	0, 
+      							customers.size()-1,
+      							xidx,
+      							yidx);
+      clear_option(3, 0, 5);
+      if(input == '\n'){
+      	customers.erase(customers.begin()+yidx);
+      }
+   }
+}
 
 void display_sort_options(){
 	vector<string> menuitems = {"Items, ascending",
@@ -556,113 +664,28 @@ void add_customer(vector<AllCustomers*> &customers){
 			if(yn == 'Y' || yn == 'y'){
 				add_customer(customers);
 			}
-			else
+			else{
 				selection = -1;
+			}
 		}
 	}
+	mvaddstr(5, 33, "                   ");
 	curs_set(0);
 }
 
-/*
-//Changes a field in a book, then returns to the book selection menu
-void editBook(vector<AllCustomers*> &customers){
-   int idx = 0;
-   int option = 0;
-   char ch = ' ';
-   while(ch != '`'){
-      display_titles(customers, idx);
-      ch = handle_vert_in_scr(customers.size(), 0, idx);
-      if(ch == '\n'){
-         display_browse_book(customers, idx);
-         option = handle_vert_in(7, 0);
-         if(option != -1)
-            mvhline(6 + 2 * option, HEIGHT, ' ', 53);
-         switch(option){
-            case 0:
-               customers.at(idx)->setTitle(handle_text_in(1, option));
-               break;
-            case 1:
-               customers.at(idx)->setAuthor(handle_text_in(1, option));
-               break;
-            case 2:
-               customers.at(idx)->setPublisher(handle_text_in(1, option));
-               break;
-            case 3:
-               customers.at(idx)->setDate(handle_text_in(1, option));
-               break;
-            case 4:
-               customers.at(idx)->setPageCount(
-                                 stoi(handle_numeric_in(1, option)));
-               break;
-            case 5:
-               customers.at(idx)->setComplete(
-                                 stob(handle_text_in(1, option)));
-               break;
-            case 6:
-               customers.at(idx)->setExcerpt(handle_text_in(1, option));
-               break;
-         }
-         sortByAuthorAndTitle(customers);
-         idx = 0;
-         ch = ' ';
-      }
-   }
+// Writes our customers contents to a file of our choosing.
+// Don't put a backspace in the name or you'll never be able to type it
+void save_quit(vector<AllCustomers*> customers){
+   string prompt = "-> Enter a filename for customers: ";
+   mvaddstr(16, 24, prompt.c_str());
+   refresh();
+   prompt = handle_text_in(2, 6);
+   write_customer_file(customers, prompt);
+   prompt = "-> Enter a filename for purchases: ";
+   mvaddstr(20, 24, prompt.c_str());
+   prompt = handle_text_in(2, 8);
+   write_purchase_file(customers, prompt);
 }
-
-//Groups books by publisher and allows you to view only grouped books
-void browseByPublisher(vector<AllCustomers*> customers){
-   clear_workspace();
-   vector<string> publishers;
-   vector<Book*> books;
-   string pub;
-   char ch = ' ';
-   bool exists;
-   for(int i = 0; i < customers.size(); i++){
-      pub = customers.at(i)->getPublisher();
-      exists = false;
-      for(int j = 0; j < publishers.size(); j++){
-         if(pub == publishers.at(j)){
-            exists = true;
-         }
-      }
-      if(!exists){
-         publishers.push_back(pub);
-      }
-   }
-   int idx = 0;
-   while(ch != '`'){
-      for(int i = 0; i < publishers.size(); i++){
-         mvaddstr(6 + 2*i, 5, publishers.at(i).c_str());   
-      }
-      ch = handle_vert_in_scr(publishers.size(), 0, idx);
-      if(ch == '\n'){
-         pub = publishers.at(idx);
-         for(int i = 0; i < customers.size(); i++){
-            if(customers.at(i)->getPublisher() == pub){
-               books.push_back(customers.at(i));
-            }
-         }
-         browse_customers(books);
-         books.clear();
-         clear_workspace();
-         idx = 0;
-         ch = ' ';
-      }
-   }
-}
-
-*/
-//Writes our customers contents to a file of our choosing.
-//Don't put a backspace in the name or you'll never be able to type it
-// void save_quit(vector<AllCustomers*> customers){
-//    string prompt = "-> Enter a filename: ";
-//    mvaddstr(16, 19, prompt.c_str());
-//    refresh();
-//    prompt = handle_text_in(2, 5);
-//    for(int i = 0; i < customers.size(); i++){
-//       customers.at(i)->writeToFile(prompt);
-//    }
-// }
 
 //Routine to collect all of the functionality we have built
 void main_menu(vector<AllCustomers*> &customers){
@@ -686,16 +709,16 @@ void main_menu(vector<AllCustomers*> &customers){
             case 2:
                 add_customer(customers);
             	break;
-            // case 3:
-            //    createBook(customers);
-            //    break;
-            // case 4:
-            //    editBook(customers);
-            //    break;
-            // case 5:
-            //    save_quit(customers);
-            //    endwin();
-            //    return;
+            case 3:
+            	browse_customer_list(customers);
+            	break;
+            case 4:
+            	delete_customer(customers);
+            	break;
+            case 5:
+               save_quit(customers);
+               endwin();
+               return;
             case 6:
                endwin();
                return;

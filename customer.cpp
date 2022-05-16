@@ -197,6 +197,18 @@ void AllCustomers::sort_purchases(int flag){
 	}
 }
 
+void sort_by_account(vector<AllCustomers*> &customers){
+	AllCustomers* tmp;
+	for(int i = 0; i < customers.size(); i++){
+		for(int j = 0; j < customers.size() - 1; j++){
+			if(customers.at(j)->get_acc() < customers.at(j)->get_acc()){
+				tmp = customers.at(j+1);
+				customers.at(j+1) = customers.at(j);
+				customers.at(j) = tmp;
+			}
+		}
+	}
+}
 void AllCustomers::populate_purchases(string filename){
 	ifstream inFile;
 	string tmp;

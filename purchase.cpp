@@ -53,6 +53,9 @@ void AllPurchases::set_amount(int in){
 void AllPurchases::set_price(double in){
 	this->price = in;
 }
+void AllPurchases::set_acc(int in){
+	this->account = in;
+}
 
 bool AllPurchases::operator<(AllPurchases& rhs){
 	return this->account < rhs.account;

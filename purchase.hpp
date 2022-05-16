@@ -35,6 +35,7 @@ public:
 	void set_date(string in);
 	void set_amount(int in);
 	void set_price(double in);
+	void set_acc(int in);
 
 	bool operator<(AllPurchases& rhs);
 	bool operator==(AllPurchases& rhs);
